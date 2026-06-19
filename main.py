@@ -1,71 +1,69 @@
 from config.app_config import AppConfig
 from core.user import User
+
 from services.ticket_service import TicketService
 from services.access_service import AccessService
+from services.notification_service import ExternalMessengerAPI
 
-from patterns.creational.builder import TicketBuilder, TicketDirector
-from patterns.creational.factory_method import NotificationFactory
+from patterns.structural.facade import TicketSystemFacade
+from patterns.structural.adapter import MessengerNotificationAdapter
 
 
 def main():
-    print("=== Coursework Ticket System: Creational Patterns Check ===\n")
+    print("=== Coursework Ticket System: Structural Patterns Check ===\n")
 
     # Singleton: единая конфигурация приложения.
-    config1 = AppConfig()
-    config2 = AppConfig()
-
+    config = AppConfig()
     print("=== Singleton: Application Configuration ===")
-    print(config1.get_info())
-    print(f"Singleton check: config1 is config2 -> {config1 is config2}")
+    print(config.get_info())
 
     ticket_service = TicketService()
-
-    # Builder: пошаговая сборка сложных тикетов.
-    print("\n=== Builder: Ticket Creation ===")
-    builder = TicketBuilder()
-    director = TicketDirector(builder)
-
-    access_ticket = director.create_access_ticket(
-        ticket_id=ticket_service.get_next_id(),
-        owner="ilia"
-    )
-
-    hardware_ticket = director.create_hardware_ticket(
-        ticket_id=ticket_service.get_next_id(),
-        owner="admin"
-    )
-
-    ticket_service.save_ticket(access_ticket)
-    ticket_service.save_ticket(hardware_ticket)
-
-    print()
-    print(access_ticket.get_info())
-    print()
-    print(hardware_ticket.get_info())
-
-    # Factory Method: создание разных каналов уведомлений.
-    print("\n=== Factory Method: Notification Creation ===")
-    notification_factory = NotificationFactory()
-
-    email_notification = notification_factory.create_notification("email")
-    sms_notification = notification_factory.create_notification("sms")
-    messenger_notification = notification_factory.create_notification("messenger")
-
-    email_notification.send("ilia", "Your access ticket has been created.")
-    sms_notification.send("+37360000000", "Your hardware ticket has been created.")
-    messenger_notification.send("admin", "A new ticket has been assigned to your department.")
-
-    # Базовая проверка доступа.
-    print("\n=== Access Service Check ===")
-    owner = User(username="ilia", role="user")
-    admin = User(username="admin", role="admin")
-    stranger = User(username="alex", role="user")
-
     access_service = AccessService()
 
-    print(f"Owner can view access ticket: {access_service.can_view_ticket(owner, access_ticket)}")
-    print(f"Admin can view access ticket: {access_service.can_view_ticket(admin, access_ticket)}")
-    print(f"Stranger can view access ticket: {access_service.can_view_ticket(stranger, access_ticket)}")
+    # Facade создаёт единую точку входа в тикет-систему.
+    ticket_system = TicketSystemFacade(
+        ticket_service=ticket_service,
+        access_service=access_service
+    )
+
+    print("\n=== Composite: Ticket Categories ===")
+    ticket_system.show_categories()
+
+    print("\n=== Facade + Builder + Factory Method: Creating Tickets ===")
+    access_ticket = ticket_system.create_access_ticket(
+        owner="ilia",
+        notification_channel="email"
+    )
+
+    hardware_ticket = ticket_system.create_hardware_ticket(
+        owner="admin",
+        notification_channel="sms"
+    )
+
+    print("\n=== Adapter: External Messenger API ===")
+    external_api = ExternalMessengerAPI()
+    messenger_adapter = MessengerNotificationAdapter(external_api)
+    messenger_adapter.send(
+        recipient="admin",
+        message="External messenger notification was sent through adapter."
+    )
+
+    print("\n=== Decorator + Proxy: Ticket View and Access Control ===")
+    owner = User(username="ilia", role="user")
+    stranger = User(username="alex", role="user")
+    admin = User(username="admin", role="admin")
+
+    print("\nOwner tries to view own ticket:")
+    ticket_system.show_ticket_for_user(owner, access_ticket)
+
+    print("\nStranger tries to view another user's ticket:")
+    ticket_system.show_ticket_for_user(stranger, access_ticket)
+
+    print("\nAdmin tries to view any ticket:")
+    ticket_system.show_ticket_for_user(admin, access_ticket)
+
+    print("\n=== Facade: All Tickets ===")
+    ticket_system.show_all_tickets()
 
 
 if __name__ == "__main__":
