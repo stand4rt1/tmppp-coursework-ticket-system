@@ -1,0 +1,177 @@
+@startuml
+title Structural Design Patterns in Coursework Ticket System
+
+skinparam classAttributeIconSize 0
+
+class Ticket {
+    +ticket_id: int
+    +title: str
+    +description: str
+    +category: str
+    +owner: str
+    +ticket_type: str
+    +priority: str
+    +assignee: str
+    +status: str
+    +confidential: bool
+    +sla_response_time: str
+    +urgent: bool
+    +get_info(): str
+}
+
+class User {
+    +username: str
+    +role: str
+    +is_admin(): bool
+    +get_info(): str
+}
+
+class AccessService {
+    +can_view_ticket(user: User, ticket: Ticket): bool
+    +can_close_ticket(user: User, ticket: Ticket): bool
+}
+
+interface NotificationSender {
+    +send(recipient: str, message: str): None
+}
+
+class MessengerNotificationAdapter {
+    -external_api: ExternalMessengerAPI
+    +send(recipient: str, message: str): None
+}
+
+class ExternalMessengerAPI {
+    +push_message(user_login: str, text: str): None
+}
+
+interface TicketViewComponent {
+    +get_info(): str
+}
+
+class BaseTicketView {
+    -ticket: Ticket
+    +get_info(): str
+}
+
+abstract class TicketViewDecorator {
+    -wrapped_view: TicketViewComponent
+    +get_info(): str
+}
+
+class UrgentTicketViewDecorator {
+    +get_info(): str
+}
+
+class SlaTicketViewDecorator {
+    +get_info(): str
+}
+
+class ConfidentialTicketViewDecorator {
+    +get_info(): str
+}
+
+interface TicketAccess {
+    +show_ticket(): None
+}
+
+class RealTicketAccess {
+    -ticket_view
+    +show_ticket(): None
+}
+
+class TicketAccessProxy {
+    -user: User
+    -ticket: Ticket
+    -real_access: RealTicketAccess
+    -access_service: AccessService
+    +show_ticket(): None
+}
+
+interface CategoryComponent {
+    +display(level: int): None
+}
+
+class CategoryLeaf {
+    -name: str
+    +display(level: int): None
+}
+
+class CategoryGroup {
+    -name: str
+    -children: list
+    +add(component: CategoryComponent): None
+    +remove(component: CategoryComponent): None
+    +display(level: int): None
+}
+
+class TicketSystemFacade {
+    -ticket_service: TicketService
+    -access_service: AccessService
+    -notification_factory: NotificationFactory
+    -builder: TicketBuilder
+    -director: TicketDirector
+    -category_tree: CategoryGroup
+    +show_categories(): None
+    +create_access_ticket(owner: str, notification_channel: str): Ticket
+    +create_hardware_ticket(owner: str, notification_channel: str): Ticket
+    +create_ticket_view(ticket: Ticket)
+    +show_ticket_for_user(user: User, ticket: Ticket): None
+    +show_all_tickets(): None
+}
+
+NotificationSender <|.. MessengerNotificationAdapter
+MessengerNotificationAdapter --> ExternalMessengerAPI
+
+TicketViewComponent <|.. BaseTicketView
+TicketViewComponent <|.. TicketViewDecorator
+TicketViewDecorator <|-- UrgentTicketViewDecorator
+TicketViewDecorator <|-- SlaTicketViewDecorator
+TicketViewDecorator <|-- ConfidentialTicketViewDecorator
+BaseTicketView --> Ticket
+TicketViewDecorator --> TicketViewComponent
+
+TicketAccess <|.. RealTicketAccess
+TicketAccess <|.. TicketAccessProxy
+TicketAccessProxy --> User
+TicketAccessProxy --> Ticket
+TicketAccessProxy --> RealTicketAccess
+TicketAccessProxy --> AccessService
+
+CategoryComponent <|.. CategoryLeaf
+CategoryComponent <|.. CategoryGroup
+CategoryGroup o--> CategoryComponent
+
+TicketSystemFacade --> Ticket
+TicketSystemFacade --> User
+TicketSystemFacade --> CategoryGroup
+TicketSystemFacade --> TicketAccessProxy
+TicketSystemFacade --> TicketViewComponent
+
+note top of MessengerNotificationAdapter
+Adapter:
+converts push_message()
+to send().
+end note
+
+note top of TicketSystemFacade
+Facade:
+one simplified interface
+for the ticket system.
+end note
+
+note top of TicketViewDecorator
+Decorator:
+adds visual labels to ticket view.
+end note
+
+note top of TicketAccessProxy
+Proxy:
+checks access before showing ticket.
+end note
+
+note top of CategoryGroup
+Composite:
+tree structure of ticket categories.
+end note
+
+@enduml

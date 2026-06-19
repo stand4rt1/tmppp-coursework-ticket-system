@@ -10,7 +10,7 @@ from patterns.structural.adapter import MessengerNotificationAdapter
 
 
 def main():
-    print("=== Coursework Ticket System: Structural Patterns Check ===\n")
+    print("=== Coursework Ticket System: Full Pattern Integration Check ===\n")
 
     # Singleton: единая конфигурация приложения.
     config = AppConfig()
@@ -20,7 +20,7 @@ def main():
     ticket_service = TicketService()
     access_service = AccessService()
 
-    # Facade создаёт единую точку входа в тикет-систему.
+    # Facade: единая точка входа в систему.
     ticket_system = TicketSystemFacade(
         ticket_service=ticket_service,
         access_service=access_service
@@ -29,7 +29,7 @@ def main():
     print("\n=== Composite: Ticket Categories ===")
     ticket_system.show_categories()
 
-    print("\n=== Facade + Builder + Factory Method: Creating Tickets ===")
+    print("\n=== Builder + Factory Method + Observer: Creating Tickets ===")
     access_ticket = ticket_system.create_access_ticket(
         owner="ilia",
         notification_channel="email"
@@ -47,6 +47,28 @@ def main():
         recipient="admin",
         message="External messenger notification was sent through adapter."
     )
+
+    print("\n=== Strategy: Priority Calculation ===")
+    ticket_system.calculate_priority_by_keywords(access_ticket)
+    ticket_system.calculate_priority_by_category(hardware_ticket)
+
+    print("\n=== Chain of Responsibility: Ticket Processing ===")
+    ticket_system.process_ticket(access_ticket)
+    ticket_system.process_ticket(hardware_ticket)
+
+    print("\n=== State: Ticket Lifecycle ===")
+    ticket_system.move_ticket_next_state(access_ticket)
+    ticket_system.move_ticket_next_state(access_ticket)
+    ticket_system.move_ticket_next_state(access_ticket)
+
+    print("\n=== Command: Ticket Actions ===")
+    ticket_system.assign_ticket_with_command(
+        ticket=hardware_ticket,
+        assignee="Support Team Lead"
+    )
+
+    ticket_system.close_ticket_with_command(hardware_ticket)
+    ticket_system.show_command_history()
 
     print("\n=== Decorator + Proxy: Ticket View and Access Control ===")
     owner = User(username="ilia", role="user")

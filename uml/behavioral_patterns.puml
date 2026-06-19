@@ -1,0 +1,201 @@
+@startuml
+title Behavioral Design Patterns in Coursework Ticket System
+
+skinparam classAttributeIconSize 0
+
+class Ticket {
+    +ticket_id: int
+    +title: str
+    +description: str
+    +category: str
+    +owner: str
+    +ticket_type: str
+    +priority: str
+    +assignee: str
+    +status: str
+    +get_info(): str
+}
+
+interface PriorityStrategy {
+    +calculate_priority(ticket: Ticket): str
+}
+
+class CategoryPriorityStrategy {
+    +calculate_priority(ticket: Ticket): str
+}
+
+class KeywordPriorityStrategy {
+    +calculate_priority(ticket: Ticket): str
+}
+
+class PriorityContext {
+    -strategy: PriorityStrategy
+    +set_strategy(strategy: PriorityStrategy): None
+    +apply_priority(ticket: Ticket): None
+}
+
+interface Observer {
+    +update(ticket: Ticket, message: str): None
+}
+
+class EmailObserver {
+    +update(ticket: Ticket, message: str): None
+}
+
+class ManagerObserver {
+    +update(ticket: Ticket, message: str): None
+}
+
+class AuditObserver {
+    +update(ticket: Ticket, message: str): None
+}
+
+class TicketNotifier {
+    -_observers: list
+    +attach(observer: Observer): None
+    +detach(observer: Observer): None
+    +notify(ticket: Ticket, message: str): None
+}
+
+interface TicketState {
+    +next_state(ticket: Ticket): None
+}
+
+class NewState {
+    +next_state(ticket: Ticket): None
+}
+
+class InProgressState {
+    +next_state(ticket: Ticket): None
+}
+
+class ResolvedState {
+    +next_state(ticket: Ticket): None
+}
+
+class ClosedState {
+    +next_state(ticket: Ticket): None
+}
+
+class TicketStateContext {
+    +move_next(ticket: Ticket): None
+}
+
+interface Command {
+    +execute(): None
+}
+
+class AssignTicketCommand {
+    -ticket: Ticket
+    -assignee: str
+    -notifier: TicketNotifier
+    +execute(): None
+}
+
+class ChangeStatusCommand {
+    -ticket: Ticket
+    -new_status: str
+    -notifier: TicketNotifier
+    +execute(): None
+}
+
+class CloseTicketCommand {
+    -ticket: Ticket
+    -notifier: TicketNotifier
+    +execute(): None
+}
+
+class CommandInvoker {
+    -history: list
+    +execute_command(command: Command): None
+    +show_history(): None
+}
+
+abstract class TicketHandler {
+    -next_handler: TicketHandler
+    +set_next(handler: TicketHandler): TicketHandler
+    +handle(ticket: Ticket): None
+}
+
+class CategoryValidationHandler {
+    +handle(ticket: Ticket): None
+}
+
+class PriorityValidationHandler {
+    +handle(ticket: Ticket): None
+}
+
+class AssignmentHandler {
+    +handle(ticket: Ticket): None
+}
+
+class FinalProcessingHandler {
+    +handle(ticket: Ticket): None
+}
+
+PriorityStrategy <|.. CategoryPriorityStrategy
+PriorityStrategy <|.. KeywordPriorityStrategy
+PriorityContext --> PriorityStrategy
+PriorityContext --> Ticket
+
+Observer <|.. EmailObserver
+Observer <|.. ManagerObserver
+Observer <|.. AuditObserver
+TicketNotifier o--> Observer
+TicketNotifier --> Ticket
+
+TicketState <|.. NewState
+TicketState <|.. InProgressState
+TicketState <|.. ResolvedState
+TicketState <|.. ClosedState
+TicketStateContext --> Ticket
+TicketStateContext --> NewState
+TicketStateContext --> InProgressState
+TicketStateContext --> ResolvedState
+TicketStateContext --> ClosedState
+
+Command <|.. AssignTicketCommand
+Command <|.. ChangeStatusCommand
+Command <|.. CloseTicketCommand
+CommandInvoker o--> Command
+AssignTicketCommand --> Ticket
+AssignTicketCommand --> TicketNotifier
+ChangeStatusCommand --> Ticket
+ChangeStatusCommand --> TicketNotifier
+CloseTicketCommand --> Ticket
+CloseTicketCommand --> TicketNotifier
+
+TicketHandler <|-- CategoryValidationHandler
+TicketHandler <|-- PriorityValidationHandler
+TicketHandler <|-- AssignmentHandler
+TicketHandler <|-- FinalProcessingHandler
+TicketHandler --> TicketHandler : next
+TicketHandler --> Ticket
+
+note top of PriorityContext
+Strategy:
+different priority algorithms.
+end note
+
+note top of TicketNotifier
+Observer:
+notifies subscribers
+about ticket events.
+end note
+
+note top of TicketStateContext
+State:
+controls ticket lifecycle.
+end note
+
+note top of CommandInvoker
+Command:
+turns actions into objects.
+end note
+
+note top of TicketHandler
+Chain of Responsibility:
+step-by-step ticket processing.
+end note
+
+@enduml

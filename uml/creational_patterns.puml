@@ -1,0 +1,130 @@
+@startuml
+title Creational Design Patterns in Coursework Ticket System
+
+skinparam classAttributeIconSize 0
+
+class AppConfig {
+    -_instance
+    +app_name: str
+    +default_notification_channel: str
+    +max_open_tickets_per_user: int
+    +support_department: str
+    +get_info(): str
+}
+
+class Ticket {
+    +ticket_id: int
+    +title: str
+    +description: str
+    +category: str
+    +owner: str
+    +ticket_type: str
+    +priority: str
+    +assignee: str
+    +status: str
+    +confidential: bool
+    +sla_response_time: str
+    +urgent: bool
+    +get_info(): str
+}
+
+class TicketBuilder {
+    -_ticket_id
+    -_title
+    -_description
+    -_category
+    -_owner
+    -_ticket_type
+    -_priority
+    -_assignee
+    -_status
+    -_confidential
+    -_sla_response_time
+    -_urgent
+    +reset()
+    +set_id(ticket_id: int)
+    +set_title(title: str)
+    +set_description(description: str)
+    +set_category(category: str)
+    +set_owner(owner: str)
+    +set_ticket_type(ticket_type: str)
+    +mark_confidential()
+    +set_sla_response_time(response_time: str)
+    +mark_urgent()
+    +build(): Ticket
+}
+
+class TicketDirector {
+    -builder: TicketBuilder
+    +create_access_ticket(ticket_id: int, owner: str): Ticket
+    +create_hardware_ticket(ticket_id: int, owner: str): Ticket
+}
+
+interface Notification {
+    +send(recipient: str, message: str): None
+}
+
+class EmailNotification {
+    -service: EmailNotificationService
+    +send(recipient: str, message: str): None
+}
+
+class SmsNotification {
+    -service: SmsNotificationService
+    +send(recipient: str, message: str): None
+}
+
+class MessengerNotification {
+    -service: ExternalMessengerAPI
+    +send(recipient: str, message: str): None
+}
+
+class NotificationFactory {
+    +create_notification(notification_type: str): Notification
+}
+
+class EmailNotificationService {
+    +send_email(recipient: str, message: str): None
+}
+
+class SmsNotificationService {
+    +send_sms(phone_number: str, message: str): None
+}
+
+class ExternalMessengerAPI {
+    +push_message(user_login: str, text: str): None
+}
+
+TicketBuilder --> Ticket
+TicketDirector --> TicketBuilder
+TicketDirector --> Ticket
+
+Notification <|.. EmailNotification
+Notification <|.. SmsNotification
+Notification <|.. MessengerNotification
+
+NotificationFactory --> Notification
+
+EmailNotification --> EmailNotificationService
+SmsNotification --> SmsNotificationService
+MessengerNotification --> ExternalMessengerAPI
+
+note top of AppConfig
+Singleton:
+one configuration instance
+for the whole application.
+end note
+
+note right of TicketBuilder
+Builder:
+creates complex Ticket objects
+step by step.
+end note
+
+note bottom of NotificationFactory
+Factory Method:
+creates notification objects
+depending on selected type.
+end note
+
+@enduml

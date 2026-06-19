@@ -1,0 +1,171 @@
+@startuml
+title Coursework Ticket System - Full Architecture
+
+skinparam classAttributeIconSize 0
+
+package "Core" {
+    class Ticket
+    class User
+}
+
+package "Configuration" {
+    class AppConfig
+}
+
+package "Services" {
+    class TicketService
+    class AccessService
+    class EmailNotificationService
+    class SmsNotificationService
+    class ExternalMessengerAPI
+}
+
+package "Creational Patterns" {
+    class TicketBuilder
+    class TicketDirector
+    class NotificationFactory
+    interface Notification
+    class EmailNotification
+    class SmsNotification
+    class MessengerNotification
+}
+
+package "Structural Patterns" {
+    interface NotificationSender
+    class MessengerNotificationAdapter
+    interface TicketViewComponent
+    class BaseTicketView
+    abstract class TicketViewDecorator
+    class UrgentTicketViewDecorator
+    class SlaTicketViewDecorator
+    class ConfidentialTicketViewDecorator
+    interface TicketAccess
+    class RealTicketAccess
+    class TicketAccessProxy
+    interface CategoryComponent
+    class CategoryLeaf
+    class CategoryGroup
+    class TicketSystemFacade
+}
+
+package "Behavioral Patterns" {
+    interface PriorityStrategy
+    class CategoryPriorityStrategy
+    class KeywordPriorityStrategy
+    class PriorityContext
+
+    interface Observer
+    class EmailObserver
+    class ManagerObserver
+    class AuditObserver
+    class TicketNotifier
+
+    interface TicketState
+    class NewState
+    class InProgressState
+    class ResolvedState
+    class ClosedState
+    class TicketStateContext
+
+    interface Command
+    class AssignTicketCommand
+    class CloseTicketCommand
+    class CommandInvoker
+
+    abstract class TicketHandler
+    class CategoryValidationHandler
+    class PriorityValidationHandler
+    class AssignmentHandler
+    class FinalProcessingHandler
+}
+
+AppConfig ..> TicketSystemFacade
+
+TicketService --> Ticket
+AccessService --> User
+AccessService --> Ticket
+
+TicketBuilder --> Ticket
+TicketDirector --> TicketBuilder
+TicketDirector --> Ticket
+
+Notification <|.. EmailNotification
+Notification <|.. SmsNotification
+Notification <|.. MessengerNotification
+NotificationFactory --> Notification
+EmailNotification --> EmailNotificationService
+SmsNotification --> SmsNotificationService
+MessengerNotification --> ExternalMessengerAPI
+
+NotificationSender <|.. MessengerNotificationAdapter
+MessengerNotificationAdapter --> ExternalMessengerAPI
+
+TicketViewComponent <|.. BaseTicketView
+TicketViewComponent <|.. TicketViewDecorator
+TicketViewDecorator <|-- UrgentTicketViewDecorator
+TicketViewDecorator <|-- SlaTicketViewDecorator
+TicketViewDecorator <|-- ConfidentialTicketViewDecorator
+BaseTicketView --> Ticket
+TicketViewDecorator --> TicketViewComponent
+
+TicketAccess <|.. RealTicketAccess
+TicketAccess <|.. TicketAccessProxy
+TicketAccessProxy --> User
+TicketAccessProxy --> Ticket
+TicketAccessProxy --> AccessService
+
+CategoryComponent <|.. CategoryLeaf
+CategoryComponent <|.. CategoryGroup
+CategoryGroup o--> CategoryComponent
+
+PriorityStrategy <|.. CategoryPriorityStrategy
+PriorityStrategy <|.. KeywordPriorityStrategy
+PriorityContext --> PriorityStrategy
+PriorityContext --> Ticket
+
+Observer <|.. EmailObserver
+Observer <|.. ManagerObserver
+Observer <|.. AuditObserver
+TicketNotifier o--> Observer
+TicketNotifier --> Ticket
+
+TicketState <|.. NewState
+TicketState <|.. InProgressState
+TicketState <|.. ResolvedState
+TicketState <|.. ClosedState
+TicketStateContext --> Ticket
+
+Command <|.. AssignTicketCommand
+Command <|.. CloseTicketCommand
+CommandInvoker o--> Command
+AssignTicketCommand --> Ticket
+AssignTicketCommand --> TicketNotifier
+CloseTicketCommand --> Ticket
+CloseTicketCommand --> TicketNotifier
+
+TicketHandler <|-- CategoryValidationHandler
+TicketHandler <|-- PriorityValidationHandler
+TicketHandler <|-- AssignmentHandler
+TicketHandler <|-- FinalProcessingHandler
+TicketHandler --> TicketHandler : next
+TicketHandler --> Ticket
+
+TicketSystemFacade --> TicketService
+TicketSystemFacade --> AccessService
+TicketSystemFacade --> TicketDirector
+TicketSystemFacade --> NotificationFactory
+TicketSystemFacade --> CategoryGroup
+TicketSystemFacade --> PriorityContext
+TicketSystemFacade --> TicketNotifier
+TicketSystemFacade --> TicketStateContext
+TicketSystemFacade --> CommandInvoker
+TicketSystemFacade --> TicketHandler
+TicketSystemFacade --> TicketAccessProxy
+TicketSystemFacade --> TicketViewComponent
+
+note right of TicketSystemFacade
+Facade coordinates all main operations
+of the ticket system.
+end note
+
+@enduml
